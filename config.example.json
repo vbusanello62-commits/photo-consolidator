@@ -1,0 +1,39 @@
+{
+  "_comment": "Copia questo file, modifica i percorsi con i tuoi dischi reali, poi lancia: python3 consolidate.py --config config.json --dry-run",
+  "sources": [
+    {
+      "name": "DiscoA",
+      "path": "/media/utente/DiscoA",
+      "network": false
+    },
+    {
+      "name": "DiscoB",
+      "path": "/media/utente/DiscoB",
+      "network": false
+    }
+  ],
+  "destination": {
+    "primary": "/media/utente/FOTOGRAFIE",
+    "fallback": [
+      {
+        "path": "/media/utente/DiscoDiRiserva",
+        "subdir": "FOTOGRAFIE"
+      }
+    ]
+  },
+  "scratch_roots": [
+    "~/.photo-consolidator/_scratch"
+  ],
+  "state_dir": "~/.photo-consolidator",
+  "min_width": 640,
+  "min_height": 480,
+  "min_dest_free_gb": 5,
+  "min_scratch_free_gb": 2,
+  "hash_workers": null,
+  "extraction_pool_workers": 10,
+  "default_extract_concurrency": 4,
+  "rotational_source_concurrency": {
+    "DiscoA": 1,
+    "DiscoB": 1
+  }
+}
