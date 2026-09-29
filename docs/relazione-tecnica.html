@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Consolidamento di Archivi Fotografici Multi-Sorgente con Resilienza ai Blackout</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2.2cm 2cm 2.4cm 2cm;
+    @bottom-center {
+      content: counter(page);
+      font-family: 'Georgia', serif;
+      font-size: 9pt;
+      color: #888;
+    }
+  }
+  @page cover {
+    margin: 0;
+    @bottom-center { content: none; }
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #1c1c1c;
+    font-size: 11pt;
+    line-height: 1.65;
+  }
+  .cover h1 {
+    position: relative;
+    z-index: 2;
+  }
+  .cover {
+    page: cover;
+    page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden;
+    height: 297mm;
+    width: 210mm;
+    background: linear-gradient(160deg, #0f2027 0%, #203a43 45%, #2c5364 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 3cm 3cm;
+    box-sizing: border-box;
+  }
+  .cover .kicker {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    font-size: 11pt;
+    color: #8fd3e8;
+    margin-bottom: 1.2cm;
+  }
+  .cover h1 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 30pt;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0 0 0.8cm 0;
+    max-width: 15cm;
+  }
+  .cover .subtitle {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13.5pt;
+    font-weight: 300;
+    color: #d6e9f0;
+    max-width: 13cm;
+    margin-bottom: 2cm;
+  }
+  .cover .divider {
+    width: 90px;
+    height: 3px;
+    background: #8fd3e8;
+    margin: 0.8cm 0;
+  }
+  .cover .meta {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    color: #a9c9d4;
+    margin-top: 2cm;
+  }
+  .cover .stats {
+    display: flex;
+    gap: 1.2cm;
+    margin-top: 1.5cm;
+  }
+  .cover .stat-box {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .cover .stat-num {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #8fd3e8;
+  }
+  .cover .stat-label {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #a9c9d4;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: #12303f;
+    page-break-after: avoid;
+  }
+  h1.chapter {
+    font-size: 22pt;
+    border-bottom: 3px solid #2c5364;
+    padding-bottom: 0.3cm;
+    margin-top: 0;
+    margin-bottom: 0.9cm;
+    page-break-before: always;
+  }
+  h1.chapter .chnum {
+    display: block;
+    font-size: 10.5pt;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #6a8e9c;
+    font-weight: 600;
+    margin-bottom: 0.15cm;
+  }
+  h2 {
+    font-size: 14.5pt;
+    margin-top: 0.9cm;
+    margin-bottom: 0.35cm;
+    color: #1a4a5c;
+    border-left: 4px solid #2c5364;
+    padding-left: 0.3cm;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #2c5364;
+    margin-top: 0.7cm;
+    margin-bottom: 0.25cm;
+  }
+  p { text-align: justify; margin: 0.35cm 0; }
+  ul, ol { margin: 0.3cm 0; padding-left: 0.9cm; }
+  li { margin-bottom: 0.18cm; }
+
+  .toc { page-break-after: always; }
+  .toc h1 { border: none; }
+  .toc ol {
+    list-style: none;
+    padding-left: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+  .toc > ol > li {
+    margin-bottom: 0.5cm;
+    font-size: 12pt;
+    font-weight: 600;
+    color: #12303f;
+  }
+  .toc ol ol { margin-top: 0.15cm; padding-left: 0.7cm; }
+  .toc ol ol li {
+    font-size: 10pt;
+    font-weight: 400;
+    color: #3a5a66;
+    margin-bottom: 0.12cm;
+  }
+
+  code, pre, .mono {
+    font-family: 'Courier New', monospace;
+  }
+  pre {
+    background: #12303f;
+    color: #d6e9f0;
+    padding: 0.4cm 0.5cm;
+    border-radius: 4px;
+    font-size: 8.8pt;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    page-break-inside: avoid;
+    border-left: 4px solid #8fd3e8;
+  }
+  code.inline {
+    background: #eef4f6;
+    color: #b3492b;
+    padding: 0.03cm 0.15cm;
+    border-radius: 3px;
+    font-size: 9.5pt;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.4cm 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cdd9dc;
+    padding: 0.18cm 0.3cm;
+    text-align: left;
+  }
+  th {
+    background: #eef4f6;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 600;
+    color: #12303f;
+  }
+  tr:nth-child(even) td { background: #f8fbfc; }
+
+  .callout {
+    border-left: 4px solid #d99b34;
+    background: #fdf6e8;
+    padding: 0.35cm 0.5cm;
+    margin: 0.5cm 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  .callout .callout-title {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    color: #92620e;
+    text-transform: uppercase;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.15cm;
+  }
+  .callout.danger {
+    border-left-color: #b3492b;
+    background: #fdeeea;
+  }
+  .callout.danger .callout-title { color: #8c2f18; }
+  .callout.info {
+    border-left-color: #2c7da0;
+    background: #eaf4f8;
+  }
+  .callout.info .callout-title { color: #1a4a5c; }
+
+  .bug-card {
+    border: 1px solid #d8dfe1;
+    border-radius: 6px;
+    margin: 0.5cm 0 0.7cm 0;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .bug-card .bug-header {
+    background: #12303f;
+    color: white;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 10.5pt;
+    padding: 0.25cm 0.45cm;
+  }
+  .bug-card .bug-body { padding: 0.3cm 0.45cm; }
+  .bug-card .bug-body h4 {
+    font-size: 9.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6a8e9c;
+    margin: 0.3cm 0 0.1cm 0;
+  }
+
+  .footer-note {
+    font-size: 8.5pt;
+    color: #888;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin-top: 1.5cm;
+    border-top: 1px solid #ddd;
+    padding-top: 0.3cm;
+  }
+
+  a { color: #1a4a5c; }
+
+  .num-list { counter-reset: item; list-style: none; padding-left: 0; }
+  .num-list > li {
+    counter-increment: item;
+    margin-bottom: 0.3cm;
+    padding-left: 0.9cm;
+    position: relative;
+  }
+  .num-list > li::before {
+    content: counter(item);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    color: white;
+    background: #2c5364;
+    width: 0.55cm;
+    height: 0.55cm;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 9pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<div class="cover">
+  <div class="kicker">Relazione Tecnica</div>
+  <h1>Consolidamento di Archivi<br>Fotografici Multi-Sorgente<br>con Resilienza ai Blackout</h1>
+  <div class="divider"></div>
+  <div class="subtitle">
+    Progettazione, sviluppo e correzione di un sistema per deduplicare e riunire
+    un archivio fotografico distribuito su dischi multipli quasi identici,
+    inclusi i contenuti sepolti in migliaia di archivi di backup annidati
+  </div>
+  <div class="stats">
+    <div class="stat-box"><div class="stat-num">36.543</div><div class="stat-label">Foto/video unici recuperati</div></div>
+    <div class="stat-box"><div class="stat-num">11M+</div><div class="stat-label">File esaminati</div></div>
+    <div class="stat-box"><div class="stat-num">9</div><div class="stat-label">Bug critici corretti</div></div>
+  </div>
+  <div class="meta">photo-consolidator &middot; Progetto open source (Licenza MIT) &middot; 2026</div>
+</div>
+
+<!-- ===================== TOC ===================== -->
+<div class="toc">
+<h1 class="chapter"><span class="chnum">Indice</span>Sommario dei contenuti</h1>
+<ol>
+  <li>1. Introduzione e contesto del problema
+    <ol>
+      <li>1.1 Il problema del consolidamento multi-sorgente</li>
+      <li>1.2 Perché la resilienza ai blackout è un requisito, non un'opzione</li>
+      <li>1.3 Scala del caso reale affrontato</li>
+    </ol>
+  </li>
+  <li>2. Architettura della soluzione
+    <ol>
+      <li>2.1 SQLite come stato persistente centrale</li>
+      <li>2.2 Il modello dati</li>
+      <li>2.3 Le fasi del processo (Fase 0 &ndash; Fase 8)</li>
+      <li>2.4 Deduplica per contenuto</li>
+      <li>2.5 Gestione degli archivi annidati</li>
+    </ol>
+  </li>
+  <li>3. Parallelizzazione e prestazioni</li>
+  <li>4. Catalogo dei bug scoperti e delle correzioni applicate
+    <ol>
+      <li>4.1 &ndash; 4.9 Nove bug critici, causa, sintomo, correzione</li>
+    </ol>
+  </li>
+  <li>5. Avvertenze per chi riusa o estende il codice</li>
+  <li>6. Pubblicare il progetto come software libero</li>
+  <li>7. Conclusioni e lavori futuri</li>
+</ol>
+</div>
+
+<!-- ===================== CAPITOLO 1 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 1</span>Introduzione e contesto del problema</h1>
+
+<h2>1.1 Il problema del consolidamento multi-sorgente</h2>
+<p>
+Chiunque abbia accumulato fotografie digitali per più di un decennio conosce bene il problema:
+copie di sicurezza fatte in momenti diversi, su dischi diversi, spesso senza un criterio coerente,
+finiscono per produrre <strong>tre, quattro, cinque copie quasi identiche</strong> dello stesso
+archivio fotografico. "Quasi identiche" è la parola chiave: non sono copie esatte, perché nel tempo
+si aggiungono foto nuove a un disco e non all'altro, si eliminano duplicati manualmente in modo
+incoerente, si eseguono backup automatici di sistema operativo (Windows, in particolare) che
+finiscono per includere fotografie dentro cartelle di archiviazione compresse.
+</p>
+<p>
+Il risultato è un disordine multi-dimensionale: la stessa fotografia può trovarsi come file diretto
+su un disco, dentro uno zip di backup su un secondo disco, e dentro un archivio RAR multivolume
+nidificato dentro un altro zip su un terzo disco. Un consolidamento manuale è semplicemente
+impraticabile oltre poche migliaia di file; oltre il milione di file, come nel caso reale descritto
+in questa relazione, è necessario un sistema automatizzato, affidabile e capace di lavorare per
+giorni senza supervisione continua.
+</p>
+
+<h2>1.2 Perché la resilienza ai blackout è un requisito, non un'opzione</h2>
+<p>
+Un processo che scansiona, estrae ed elabora milioni di file su dischi USB può richiedere
+<strong>giorni</strong> di esecuzione continua. In questo lasso di tempo sono praticamente certi:
+interruzioni di corrente, riavvii del sistema, necessità di fermare temporaneamente il processo per
+liberare risorse, crash imprevisti causati da singoli file corrotti o casi limite non previsti.
+</p>
+<div class="callout danger">
+  <div class="callout-title">Principio di progettazione fondamentale</div>
+  Se un processo di questa durata non può essere interrotto e ripreso senza perdita di lavoro,
+  è <em>di fatto</em> inutilizzabile nella pratica. La resilienza ai blackout non è una funzionalità
+  accessoria: è il requisito architetturale che determina ogni altra scelta di design descritta in
+  questa relazione.
+</div>
+<p>
+La soluzione adottata consiste nel trattare un database SQLite come <strong>unica fonte di verità</strong>
+sullo stato di avanzamento, con ogni singola operazione (scansione di un file, estrazione di un
+archivio, hash calcolato, decisione di deduplica, copia fisica) registrata in modo atomico e
+durevole (<code class="inline">PRAGMA synchronous=FULL</code>) prima di proseguire. Il programma può
+essere interrotto in un punto qualsiasi &mdash; anche con <code class="inline">kill -9</code> o
+un distacco di corrente reale &mdash; e ripreso semplicemente rilanciando lo stesso comando: riprenderà
+esattamente da dove si era fermato, senza ripetere lavoro già svolto né, soprattutto, senza
+perdere silenziosamente dei file.
+</p>
+
+<h2>1.3 Scala del caso reale affrontato</h2>
+<p>Questa relazione documenta lo sviluppo iterativo del programma nel contesto di un caso reale:</p>
+<table>
+  <tr><th>Dimensione</th><th>Valore</th></tr>
+  <tr><td>Dischi sorgente</td><td>3 dischi USB da 3,6&ndash;13&nbsp;TB, quasi duplicati fra loro</td></tr>
+  <tr><td>File totali esaminati</td><td>oltre 11.000.000 (inclusi i contenuti degli archivi estratti)</td></tr>
+  <tr><td>Archivi di backup processati</td><td>oltre 59.000 file zip/7z/rar/tar, molti annidati</td></tr>
+  <tr><td>Durata complessiva del progetto</td><td>circa 24 ore di elaborazione effettiva, su più sessioni</td></tr>
+  <tr><td>Risultato finale</td><td>36.543 foto/video unici, 411&nbsp;GB, copiati e verificati con hash</td></tr>
+</table>
+<p>
+Durante questo lavoro sono stati scoperti e corretti <strong>nove bug distinti</strong>, alcuni dei
+quali avrebbero causato una perdita silenziosa di fotografie reali se non identificati: sono
+catalogati in dettaglio nel Capitolo 4, poiché costituiscono probabilmente la parte di maggior
+valore pratico di questa relazione per chiunque affronti un problema simile.
+</p>
+
+<!-- ===================== CAPITOLO 2 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 2</span>Architettura della soluzione</h1>
+
+<h2>2.1 SQLite come stato persistente centrale</h2>
+<p>
+La scelta di SQLite (anziché, ad esempio, tenere lo stato in memoria con checkpoint periodici su
+file, o usare un database client-server) è deliberata: SQLite offre transazioni ACID, un singolo
+file autocontenuto facile da ispezionare e sottoporre a backup, e prestazioni più che sufficienti
+per il carico di lavoro (scritture sequenziali da un unico thread scrittore, letture occasionali
+concorrenti). La configurazione chiave è:
+</p>
+<pre>conn.execute("PRAGMA journal_mode=WAL;")
+conn.execute("PRAGMA synchronous=FULL;")   # <- la garanzia anti-blackout
+conn.execute("PRAGMA busy_timeout=30000;")</pre>
+<p>
+<code class="inline">synchronous=FULL</code> è la scelta più importante e volutamente non ottimizzata
+per la velocità: garantisce che ogni transazione sia fisicamente scritta su disco (fsync) prima che
+SQLite ritorni il controllo al programma, cosa che rende impossibile la corruzione del database in
+caso di interruzione improvvisa dell'alimentazione. Il costo in prestazioni è accettabile perché le
+scritture sono raggruppate in batch (commit ogni N operazioni, non una per una) nei punti del codice
+dove il throughput è critico.
+</p>
+
+<h2>2.2 Il modello dati</h2>
+<p>Lo schema è composto da quattro tabelle:</p>
+<pre>files(id, full_path, source_root, size, mtime, category, status,
+      sha256, width, height, exif_date, target_path,
+      origin_archive_id, cache_path, error_msg, updated_at)
+
+archives(id, full_path, source_root, size, status, scratch_disk,
+         extract_dir, depth, parent_archive_id, error_msg, updated_at)
+
+hashes(sha256 PRIMARY KEY, target_path, first_file_id)
+
+scan_complete(source_root PRIMARY KEY, completed_at)</pre>
+<p>
+Ogni file transita attraverso una macchina a stati esplicita: <code class="inline">indexed</code> &rarr;
+<code class="inline">hashed</code> &rarr; (<code class="inline">duplicate</code> |
+<code class="inline">would_copy</code>/<code class="inline">copied</code> |
+<code class="inline">too_small</code> | <code class="inline">error</code>). Gli archivi seguono un
+percorso analogo: <code class="inline">pending</code> &rarr; <code class="inline">extracting</code> &rarr;
+<code class="inline">extracted</code> &rarr; <code class="inline">cleaned</code> (o
+<code class="inline">error</code>/<code class="inline">skipped</code>). Questa esplicitazione dello
+stato è ciò che rende possibile la ripresa: al riavvio, il programma interroga semplicemente
+"quali righe non sono ancora in uno stato terminale?" e riprende da lì.
+</p>
+
+<h2>2.3 Le fasi del processo</h2>
+<table>
+  <tr><th>Fase</th><th>Compito</th></tr>
+  <tr><td>0</td><td>Verifica spazio disco disponibile e raggiungibilità delle fonti configurate</td></tr>
+  <tr><td>1</td><td>Scansione parallela del filesystem di ogni fonte (un thread per fonte)</td></tr>
+  <tr><td>2</td><td>Estrazione parallela degli archivi di backup, con gestione ricorsiva degli annidati</td></tr>
+  <tr><td>3&ndash;4</td><td>Per ogni file media: lettura dimensioni/data (exiftool) e calcolo hash SHA-256</td></tr>
+  <tr><td>5&ndash;6</td><td>Deduplica (confronto hash) e copia fisica con verifica post-copia</td></tr>
+  <tr><td>7</td><td>Report finale aggregato (conteggi per stato, per fonte, errori)</td></tr>
+  <tr><td>8</td><td>Pulizia delle cartelle di scratch residue</td></tr>
+</table>
+
+<h2>2.4 Deduplica per contenuto</h2>
+<p>
+La deduplica non si basa mai su nome file o dimensione, ma esclusivamente sull'hash SHA-256 del
+contenuto completo. Il primo file con un dato hash che viene incontrato determina il percorso di
+destinazione (organizzato per data EXIF, <code class="inline">AAAA/MM/GG</code>, con fallback su una
+cartella <code class="inline">senza-data</code> quando l'EXIF manca); ogni file successivo con lo
+stesso hash viene marcato <code class="inline">duplicate</code> e punta allo stesso target, senza
+essere fisicamente ricopiato. La tabella <code class="inline">hashes</code> funge da indice univoco
+per questa decisione ed è protetta da un vincolo <code class="inline">PRIMARY KEY</code> sull'hash.
+</p>
+
+<h2>2.5 Gestione degli archivi annidati</h2>
+<p>
+È comune che un archivio di backup contenga a sua volta altri archivi (un backup settimanale che
+include l'intero profilo utente, a sua volta contenente vecchi zip di foto). Il programma supporta
+un livello configurabile di annidamento (<code class="inline">MAX_ARCHIVE_DEPTH</code>): quando
+un archivio annidato viene scoperto durante l'estrazione del genitore, viene elaborato
+<strong>immediatamente</strong>, prima che la cartella di estrazione del genitore (da cui l'annidato
+dipende fisicamente) venga ripulita. Il perché di questa scelta, non ovvia, è raccontato nel dettaglio
+al Bug&nbsp;4.7.
+</p>
+
+<!-- ===================== CAPITOLO 3 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 3</span>Parallelizzazione e prestazioni</h1>
+<p>
+La prima versione funzionante del programma elaborava gli archivi in modo strettamente sequenziale:
+estrai, indicizza, hash, copia, pulisci, passa al successivo. Misurando l'utilizzo delle risorse
+durante l'esecuzione reale è emerso un dato sorprendente: <strong>il processo utilizzava solo il 20%
+di un singolo core</strong>, su una macchina con 12 core disponibili e dischi quasi completamente
+inattivi. Il collo di bottiglia non era hardware, ma l'assenza di sovrapposizione fra l'attesa I/O
+di un'estrazione e la successiva.
+</p>
+<h2>Architettura produttore/consumatore per l'estrazione</h2>
+<p>
+La soluzione adottata separa nettamente due responsabilità:
+</p>
+<ul>
+  <li><strong>Thread worker (pool):</strong> eseguono esclusivamente l'estrazione (chiamata a
+  <code class="inline">subprocess</code>, che rilascia il GIL durante l'attesa I/O) e non toccano mai
+  il database.</li>
+  <li><strong>Thread principale (unico scrittore):</strong> consuma i risultati da una coda e
+  compie tutte le operazioni che toccano SQLite &mdash; indicizzazione, hashing, deduplica, copia
+  &mdash; mantenendo la garanzia di scrittore singolo che SQLite richiede per l'integrità.</li>
+</ul>
+<p>
+La concorrenza di estrazione è inoltre limitata <strong>per disco fisico sorgente</strong>: un solo
+thread alla volta per ciascun disco rotante (HDD), perché leggere più flussi contemporaneamente da un
+disco con testine meccaniche non aumenta il throughput &mdash; lo degrada, a causa del seek
+thrashing. Per il contenuto già estratto su scratch locale (SSD/NVMe), dove il seek non è un problema,
+la concorrenza è invece più alta.
+</p>
+<div class="callout info">
+  <div class="callout-title">Risultato misurato</div>
+  Il throughput di elaborazione è passato da circa 60&ndash;90&nbsp;MB/s a oltre 100&nbsp;MB/s
+  sostenuti, con picchi superiori, rappresentando un guadagno di velocità di circa 2&ndash;3&times;
+  rispetto alla pipeline sequenziale originale, a parità di hardware.
+</div>
+
+<!-- ===================== CAPITOLO 4 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 4</span>Catalogo dei bug scoperti e delle correzioni</h1>
+<p>
+Questo capitolo documenta, in ordine cronologico di scoperta, i nove problemi più significativi
+identificati durante lo sviluppo e la conduzione del caso reale. Ognuno segue lo stesso schema:
+<strong>sintomo osservato</strong>, <strong>causa radice</strong>, <strong>correzione applicata</strong>.
+Sono inclusi perché rappresentano insidie non ovvie che chiunque affronti un problema simile
+incontrerebbe quasi certamente.
+</p>
+
+<div class="bug-card">
+<div class="bug-header">4.1 &mdash; Scratch exFAT/NTFS incompatibile con percorsi Windows</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Migliaia di archivi di backup fallivano l'estrazione con errori <code class="inline">cannot create</code> / <code class="inline">errno=22</code>, apparentemente casuali.</p>
+<h4>Causa radice</h4>
+<p>Molti backup Windows salvano intere voci come <code class="inline">C:\Users\...\file.ext</code> come nome singolo in uno zip. <code class="inline">unzip</code> le interpreta come percorso con separatori, tentando di creare una cartella letteralmente chiamata <code class="inline">C:</code> &mdash; impossibile su exFAT/NTFS, dove <code class="inline">:</code> è un carattere riservato.</p>
+<h4>Correzione</h4>
+<p>Lo scratch di estrazione primario è stato spostato su un filesystem nativo Linux (ext4), che non impone alcuna restrizione sui byte ammessi in un nome file a parte <code class="inline">/</code> e NUL.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.2 &mdash; Crash UnicodeEncodeError su nomi file con encoding legacy</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Il processo terminava con <code class="inline">UnicodeEncodeError</code> non gestita, interrompendo l'intera esecuzione.</p>
+<h4>Causa radice</h4>
+<p>Conseguenza collaterale della correzione 4.1: ext4 accetta qualsiasi sequenza di byte come nome file, inclusi nomi codificati in code page storiche (CP850, tipica di vecchi zip DOS/Windows per lettere accentate). Salvare quel percorso in SQLite (che richiede UTF-8 valido) falliva.</p>
+<h4>Correzione</h4>
+<p>Funzione dedicata che rileva nomi non validi in UTF-8, recupera i byte originali (tramite <code class="inline">surrogateescape</code>) e li ri-decodifica esplicitamente come CP850, rinominando il file/cartella sul disco con il nome corretto.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.3 &mdash; File "da copiare" persi alla pulizia dello scratch</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>5.570 file già identificati come unici da conservare (durante una simulazione "dry-run") risultavano irraggiungibili al momento della copia reale.</p>
+<h4>Causa radice</h4>
+<p>La cartella di estrazione temporanea di un archivio viene ripulita subito dopo la sua elaborazione, <strong>anche in modalità simulazione</strong>: per i file provenienti dall'interno di un archivio, quella cancellazione avveniva prima che il file fosse mai stato effettivamente copiato, dato che la simulazione per definizione non scrive sulla destinazione finale.</p>
+<h4>Correzione</h4>
+<p>Introduzione di una cache persistente separata (su filesystem di sistema, non scratch effimero): quando un file viene identificato come "da conservare" durante una simulazione, se la sua fonte è una cartella di estrazione temporanea, ne viene salvata subito una copia nella cache, che sopravvive alla pulizia. I 5.570 file già persi sono stati recuperati ri-estraendo i rispettivi archivi originali (ancora presenti, invariati, sui dischi sorgente).</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.4 &mdash; Distruzione della parallelismo per i dischi rotanti</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Utilizzo CPU al 20% su un sistema a 12 core, con dischi quasi inattivi, nonostante decine di migliaia di archivi ancora da elaborare.</p>
+<h4>Causa radice</h4>
+<p>Pipeline di estrazione strettamente sequenziale: nessuna sovrapposizione fra l'attesa I/O di un'estrazione e la successiva.</p>
+<h4>Correzione</h4>
+<p>Architettura produttore/consumatore descritta nel Capitolo 3, con parallelismo limitato per disco fisico sorgente per evitare il seek thrashing sugli HDD rotanti.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.5 &mdash; Falso reporting dello stato "extracting"</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Dopo l'introduzione della parallelizzazione, il conteggio di archivi "in coda" crollava artificialmente da decine di migliaia a poche centinaia nell'istante stesso del riavvio, senza che fosse stato svolto lavoro reale.</p>
+<h4>Causa radice</h4>
+<p>Un tentativo iniziale di marcare in blocco tutti gli archivi in coda come "in estrazione" nel momento in cui venivano sottomessi al pool di thread, prima ancora che un worker li prendesse effettivamente in carico.</p>
+<h4>Correzione</h4>
+<p>Rimossa la marcatura preventiva: un archivio resta "in coda" (<code class="inline">pending</code>) finché un worker non lo elabora davvero, mantenendo le statistiche di avanzamento accurate senza alcun impatto sulla logica di ripresa.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.6 &mdash; Cache degli archivi non ripulita dopo l'esclusione di cartelle spazzatura</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Un'esclusione aggiunta successivamente (es. cartelle cache del browser) non aveva alcun effetto su decine di migliaia di archivi già registrati in una scansione precedente, poiché l'esclusione si applica solo durante la scansione del filesystem.</p>
+<h4>Causa radice</h4>
+<p>Le esclusioni per nome cartella (<code class="inline">EXCLUDE_DIR_NAMES</code>) vengono valutate solo mentre si cammina l'albero delle directory; non hanno effetto retroattivo su righe già inserite in una sessione precedente all'introduzione della regola.</p>
+<h4>Correzione</h4>
+<p>Script di pulizia mirato che ricontrolla ogni percorso già registrato contro l'insieme aggiornato di esclusioni e aggiorna lo stato di conseguenza, oltre alla correzione preventiva nel codice.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.7 &mdash; Archivi annidati orfani per sempre</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>53.370 archivi annidati risultavano permanentemente bloccati in stato "in coda", falliti ad ogni tentativo con "fonte non raggiungibile", indipendentemente da quante volte il processo venisse riavviato.</p>
+<h4>Causa radice</h4>
+<p>Un archivio annidato, scoperto durante l'elaborazione del genitore, veniva solo <em>registrato</em> nel database per essere elaborato alla <strong>prossima esecuzione</strong> del programma. Ma la cartella di estrazione del genitore (da cui l'annidato dipende fisicamente, essendo un file al suo interno) veniva ripulita alla fine della stessa esecuzione corrente &mdash; rendendo l'annidato irraggiungibile per sempre a ogni tentativo futuro.</p>
+<h4>Correzione</h4>
+<p>Gli archivi annidati vengono ora elaborati <strong>ricorsivamente e immediatamente</strong>, nella stessa sessione del genitore, prima che la sua cartella di estrazione venga ripulita. I 53.370 archivi già bloccati sono stati recuperati identificando i rispettivi 5.140 archivi genitori (ancora integri sui dischi sorgente) e ri-processandoli con la correzione attiva.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.8 &mdash; Archivi copiati integralmente come se fossero singole foto</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Durante la copia reale, il processo tentava di copiare un file da 26,9&nbsp;GB &mdash; risultato essere un intero archivio ZIP di esportazione Google Takeout, non una singola fotografia. Verifica estesa: 5.138 file archivio (402,8&nbsp;GB) erano nello stesso stato.</p>
+<h4>Causa radice</h4>
+<p>Stato residuo incoerente nel database, risalente a una versione precedente del codice (prima dell'introduzione delle correzioni precedenti): la riga <code class="inline">files</code> corrispondente al file-archivio stesso era rimasta erroneamente nello stato "hashed"/"da copiare" invece di essere marcata come "archiviata" al termine della sua effettiva estrazione, che nel frattempo <em>era</em> stata completata correttamente (verificato confrontando la dimensione totale del contenuto estratto con quella dell'archivio compresso: coincidevano).</p>
+<h4>Correzione</h4>
+<p>Sincronizzazione dello stato di ogni file-archivio con lo stato reale del suo record di elaborazione, senza necessità di ri-estrazione (il lavoro reale era già stato svolto correttamente). Aggiunta una regola di non regressione: un file di categoria "archivio" non deve mai transitare nella pipeline di hashing/copia riservata ai contenuti media.</p>
+</div>
+</div>
+
+<div class="bug-card">
+<div class="bug-header">4.9 &mdash; Codifica CP850 non sufficiente per tutti i casi</div>
+<div class="bug-body">
+<h4>Sintomo</h4>
+<p>Un sottoinsieme di archivi continuava a fallire l'estrazione con l'errore "cannot create" anche dopo la correzione 4.1, con messaggi contenenti sequenze di sostituzione (<code class="inline">?</code>) al posto di lettere accentate.</p>
+<h4>Causa radice</h4>
+<p><code class="inline">unzip</code> assume UTF-8 di default su Linux; per gli archivi con nomi in una code page storica diversa da quella assunta, la decodifica produce byte non validi per il filesystem.</p>
+<h4>Correzione</h4>
+<p>Strategia a cascata: tentativo con encoding UTF-8 di default, poi ritentativo esplicito con code page CP850, infine fallback su <code class="inline">7z</code> (che gestisce autonomamente il charset OEM ed è generalmente più tollerante). Solo se tutti e tre falliscono l'archivio è marcato definitivamente in errore.</p>
+</div>
+</div>
+
+<!-- ===================== CAPITOLO 5 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 5</span>Avvertenze per chi riusa o estende il codice</h1>
+<p>Chi intende adattare questo programma a un caso d'uso diverso dovrebbe prestare particolare attenzione ai seguenti punti, ciascuno collegato a un bug reale descritto nel Capitolo 4:</p>
+<ol class="num-list">
+<li><strong>Non spostare lo scratch di estrazione su un filesystem exFAT/NTFS/FAT32.</strong> Deve sempre essere un filesystem nativo Linux, altrimenti si ripresenteranno gli errori del Bug 4.1.</li>
+<li><strong>Non rimuovere la cache persistente per i file provenienti da archivi</strong> (<code class="inline">cache_ephemeral_source</code>). Senza di essa si ripresenta silenziosamente il Bug 4.3, con perdita di fotografie senza alcun messaggio di errore visibile.</li>
+<li><strong>Non processare gli archivi annidati in un secondo momento rispetto al genitore.</strong> Devono essere gestiti ricorsivamente e immediatamente (Bug 4.7), altrimenti diventano irraggiungibili per sempre alla prima pulizia dello scratch.</li>
+<li><strong>Un file di categoria "archivio" non deve mai entrare nella pipeline di hash/copia dei media.</strong> Va sempre e solo estratto; il suo contenuto va deduplicato individualmente (Bug 4.8).</li>
+<li><strong>Testare sempre prima con <code class="inline">--dry-run</code></strong> su un sottoinsieme di dati prima di un'esecuzione reale su un archivio di grandi dimensioni, e leggere attentamente il report finale.</li>
+<li><strong>Mantenere <code class="inline">PRAGMA synchronous=FULL</code>.</strong> È la garanzia fondamentale di resilienza ai blackout; disattivarla per guadagnare velocità espone al rischio di corruzione del database in caso di interruzione improvvisa.</li>
+<li><strong>Verificare sempre lo spazio libero</strong> sui dischi di destinazione e di scratch prima di un'esecuzione di grandi dimensioni; il sistema di fallback multi-disco aiuta ma non sostituisce una pianificazione dello spazio.</li>
+</ol>
+
+<!-- ===================== CAPITOLO 6 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 6</span>Pubblicare il progetto come software libero</h1>
+<p>
+Il codice è concesso con licenza <strong>MIT</strong> (il file <code class="inline">LICENSE</code> è
+incluso nel progetto): permette a chiunque di usarlo, modificarlo e ridistribuirlo liberamente, anche
+a fini commerciali, senza garanzia. Per pubblicarlo pubblicamente sono disponibili diverse strade,
+descritte di seguito in ordine di semplicità.
+</p>
+<h2>6.1 Creare un account GitHub (consigliato)</h2>
+<p>
+Non esiste un modo per pubblicare <em>su GitHub</em> senza un account GitHub: è un passaggio
+inevitabile, ma gratuito e rapido (circa due minuti):
+</p>
+<ol class="num-list">
+<li>Vai su <strong>github.com</strong> e scegli "Sign up"</li>
+<li>Serve solo un indirizzo email, una password e un nome utente: nessun documento, nessun pagamento</li>
+<li>Conferma l'email tramite il link che ricevi</li>
+<li>Crea un nuovo repository pubblico (es. <code class="inline">photo-consolidator</code>)</li>
+<li>Dalla cartella del progetto: <code class="inline">git remote add origin https://github.com/TUO-UTENTE/photo-consolidator.git</code></li>
+<li><code class="inline">git push -u origin master</code> (ti verrà chiesta l'autenticazione: GitHub richiede un <em>personal access token</em> al posto della password, generabile dalle impostazioni dell'account in Settings &rarr; Developer settings &rarr; Personal access tokens)</li>
+</ol>
+<h2>6.2 Alternative che non richiedono un account Microsoft</h2>
+<p>
+Dal 2018 GitHub è di proprietà Microsoft; se questo è il motivo della resistenza a crearne uno,
+esistono alternative equivalenti, tutte gratuite per progetti open source:
+</p>
+<table>
+<tr><th>Piattaforma</th><th>Note</th></tr>
+<tr><td><strong>GitLab.com</strong></td><td>Funzionalmente molto simile a GitHub, azienda indipendente (con sede negli USA); account gratuito con solo email</td></tr>
+<tr><td><strong>Codeberg.org</strong></td><td>No-profit europea (Germania), basata su software libero (Forgejo); nessun legame con grandi aziende tech</td></tr>
+<tr><td><strong>SourceHut (sr.ht)</strong></td><td>Minimalista, orientato a sviluppatori esperti, filosofia radicalmente open source</td></tr>
+</table>
+<p>
+La procedura di pubblicazione è concettualmente identica su tutte: creare un account, creare un
+repository vuoto, collegare il repository locale già pronto in <code class="inline">/home/titoio/photo-consolidator</code>
+(già inizializzato con <code class="inline">git init</code> e un primo commit) con
+<code class="inline">git remote add origin &lt;url&gt;</code>, quindi <code class="inline">git push</code>.
+</p>
+<div class="callout info">
+<div class="callout-title">Stato attuale del progetto</div>
+Il repository Git locale è già pronto in <code class="inline">~/photo-consolidator/</code>, con
+il primo commit effettuato. Manca solo la scelta della piattaforma e la creazione dell'account per
+completare la pubblicazione con <code class="inline">git push</code>.
+</div>
+
+<!-- ===================== CAPITOLO 7 ===================== -->
+<h1 class="chapter"><span class="chnum">Capitolo 7</span>Conclusioni e lavori futuri</h1>
+<p>
+Il caso reale descritto in questa relazione dimostra come un problema apparentemente semplice
+&mdash; "unisci queste foto sparse su più dischi" &mdash; nasconda in realtà una notevole complessità
+quando affrontato alla scala di milioni di file e centinaia di gigabyte, distribuiti su hardware
+eterogeneo (dischi USB rotanti, SSD, filesystem diversi) e accumulati nel tempo senza una struttura
+coerente. La maggior parte dei bug scoperti non riguardava la logica di business (identificare foto
+uniche) ma le <strong>interazioni ai bordi del sistema</strong>: filesystem con regole diverse,
+processi interrotti a metà, stati intermedi mai completamente terminali.
+</p>
+<p>Possibili direzioni di miglioramento future, non implementate in questa versione:</p>
+<ul>
+<li>Parallelizzazione anche della fase di hashing/copia con scritture concorrenti su SQLite (attualmente il collo di bottiglia residuo, dopo la parallelizzazione dell'estrazione)</li>
+<li>Rilevamento di near-duplicate (foto quasi identiche ma non byte-per-byte uguali, es. la stessa foto ricompressa con qualità diversa)</li>
+<li>Interfaccia web opzionale per monitorare l'avanzamento senza dover interrogare il database o i log direttamente</li>
+<li>Supporto nativo per fonti di rete (SMB/NFS) con throttling automatico invece che configurato manualmente</li>
+</ul>
+
+<div class="footer-note">
+Relazione tecnica generata a corredo del progetto open source <strong>photo-consolidator</strong>
+(licenza MIT). Documento prodotto con l'assistenza di Warp (agent@warp.dev).
+</div>
+
+</body>
+</html>
